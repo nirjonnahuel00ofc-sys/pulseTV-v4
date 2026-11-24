@@ -1,0 +1,308 @@
+{
+  "entities": {
+    "Channel": {
+      "title": "Channel",
+      "description": "Live TV or OTT stream channel synced in real time across devices.",
+      "type": "object",
+      "properties": {
+        "name": {
+          "type": "string",
+          "description": "Channel display title (1-80 chars)."
+        },
+        "category": {
+          "type": "string",
+          "description": "Channel category such as News, Sports, Movies, Entertainment, Kids."
+        },
+        "language": {
+          "type": "string",
+          "description": "Broadcast language such as Bengali, English, Hindi, Global."
+        },
+        "country": {
+          "type": "string",
+          "description": "Country or region for Country Playlist grouping such as Bangladesh, India, UK, USA, Global."
+        },
+        "logo": {
+          "type": "string",
+          "description": "Optional HTTP(S) URL for the channel logo."
+        },
+        "primary_url": {
+          "type": "string",
+          "description": "Primary HLS (.m3u8), MPEG-TS, or direct HTTP(S) stream URL."
+        },
+        "backup_url": {
+          "type": "string",
+          "description": "Optional backup stream URL used automatically on primary stream failure."
+        },
+        "is_active": {
+          "type": "boolean",
+          "description": "Controls whether the channel is live and visible to guests."
+        },
+        "created_at": {
+          "type": "string",
+          "format": "date-time",
+          "description": "Server timestamp set via FieldValue.serverTimestamp()."
+        },
+        "updated_at": {
+          "type": "string",
+          "format": "date-time",
+          "description": "Server timestamp updated via FieldValue.serverTimestamp()."
+        }
+      },
+      "required": [
+        "name",
+        "category",
+        "language",
+        "primary_url",
+        "is_active",
+        "created_at",
+        "updated_at"
+      ]
+    },
+    "UpdateNotice": {
+      "title": "UpdateNotice",
+      "description": "Broadcast announcement or schedule notice delivered to the in-app Update Inbox.",
+      "type": "object",
+      "properties": {
+        "title": {
+          "type": "string",
+          "description": "Announcement headline (1-120 chars)."
+        },
+        "message": {
+          "type": "string",
+          "description": "Announcement body text (1-1000 chars)."
+        },
+        "category": {
+          "type": "string",
+          "description": "Optional notice badge such as Notice, Channel Update, or Maintenance."
+        },
+        "timestamp": {
+          "type": "string",
+          "format": "date-time",
+          "description": "Server timestamp set via FieldValue.serverTimestamp()."
+        }
+      },
+      "required": [
+        "title",
+        "message",
+        "timestamp"
+      ]
+    },
+    "BrokenReport": {
+      "title": "BrokenReport",
+      "description": "Broken or offline stream report submitted by viewers when primary and backup URLs fail.",
+      "type": "object",
+      "properties": {
+        "channel_id": {
+          "type": "string",
+          "description": "Document ID of the channel in /channels."
+        },
+        "channel_name": {
+          "type": "string",
+          "description": "Snapshot of the channel title at report time."
+        },
+        "reason": {
+          "type": "string",
+          "description": "Failure reason or viewer note (1-500 chars)."
+        },
+        "timestamp": {
+          "type": "string",
+          "format": "date-time",
+          "description": "Server timestamp set via FieldValue.serverTimestamp()."
+        }
+      },
+      "required": [
+        "channel_id",
+        "channel_name",
+        "reason",
+        "timestamp"
+      ]
+    },
+    "LiveEvent": {
+      "title": "LiveEvent",
+      "description": "Cricfy-style live sporting or special broadcast event synced in real time across all user devices.",
+      "type": "object",
+      "properties": {
+        "title": {
+          "type": "string",
+          "description": "Event headline such as teams or match title (1-100 chars)."
+        },
+        "sport": {
+          "type": "string",
+          "description": "Sport or event category such as Cricket, Football, Combat, Motorsport."
+        },
+        "teams": {
+          "type": "string",
+          "description": "Optional league, tournament, or matchup subtitle (0-100 chars)."
+        },
+        "status": {
+          "type": "string",
+          "description": "Event status: LIVE, UPCOMING, or ENDED."
+        },
+        "thumbnail": {
+          "type": "string",
+          "description": "Optional HTTP(S) poster or thumbnail image URL."
+        },
+        "stream_url": {
+          "type": "string",
+          "description": "Primary HLS (.m3u8), MPEG-TS, or direct HTTP(S) livestream URL."
+        },
+        "backup_url": {
+          "type": "string",
+          "description": "Optional Server 2 / backup livestream URL."
+        },
+        "is_active": {
+          "type": "boolean",
+          "description": "Controls whether the live event is visible on all user devices."
+        },
+        "created_at": {
+          "type": "string",
+          "format": "date-time",
+          "description": "Server timestamp set via FieldValue.serverTimestamp()."
+        },
+        "updated_at": {
+          "type": "string",
+          "format": "date-time",
+          "description": "Server timestamp updated via FieldValue.serverTimestamp()."
+        }
+      },
+      "required": [
+        "title",
+        "sport",
+        "status",
+        "stream_url",
+        "is_active",
+        "created_at",
+        "updated_at"
+      ]
+    },
+    "BannerNotice": {
+      "title": "BannerNotice",
+      "description": "Uploadable promo or announcement image banner synced across all phones in real time.",
+      "type": "object",
+      "properties": {
+        "title": {
+          "type": "string",
+          "description": "Banner notice headline (1-100 chars)."
+        },
+        "message": {
+          "type": "string",
+          "description": "Optional notice description (0-400 chars)."
+        },
+        "image_data": {
+          "type": "string",
+          "description": "HTTP(S) image URL or compressed base64 JPEG data URI picked from gallery."
+        },
+        "action_url": {
+          "type": "string",
+          "description": "Optional HTTP(S) target link opened on tap."
+        },
+        "is_active": {
+          "type": "boolean",
+          "description": "Controls whether the banner is shown on all devices."
+        },
+        "created_at": {
+          "type": "string",
+          "format": "date-time",
+          "description": "Server timestamp set via FieldValue.serverTimestamp()."
+        },
+        "updated_at": {
+          "type": "string",
+          "format": "date-time",
+          "description": "Server timestamp updated via FieldValue.serverTimestamp()."
+        }
+      },
+      "required": [
+        "title",
+        "image_data",
+        "is_active",
+        "created_at",
+        "updated_at"
+      ]
+    },
+    "AppAnalytics": {
+      "title": "AppAnalytics",
+      "description": "Real-time aggregate viewer analytics for the Admin Dashboard.",
+      "type": "object",
+      "properties": {
+        "app_opens": {
+          "type": "integer",
+          "description": "Total app sessions opened across devices."
+        },
+        "channel_plays": {
+          "type": "integer",
+          "description": "Total live TV channel plays."
+        },
+        "event_plays": {
+          "type": "integer",
+          "description": "Total live event stream plays."
+        },
+        "updated_at": {
+          "type": "string",
+          "format": "date-time",
+          "description": "Last analytics update server timestamp."
+        }
+      },
+      "required": [
+        "app_opens",
+        "channel_plays",
+        "event_plays",
+        "updated_at"
+      ]
+    },
+    "AdminMember": {
+      "title": "AdminMember",
+      "description": "Authorized admin user record keyed by Firebase Auth UID.",
+      "type": "object",
+      "properties": {
+        "email": {
+          "type": "string",
+          "description": "Verified Google email address of the admin."
+        },
+        "role": {
+          "type": "string",
+          "description": "Admin role label."
+        },
+        "created_at": {
+          "type": "string",
+          "format": "date-time",
+          "description": "Creation timestamp."
+        }
+      },
+      "required": [
+        "email",
+        "role",
+        "created_at"
+      ]
+    }
+  },
+  "firestore": {
+    "/channels/{channelId}": {
+      "schema": { "$ref": "#/entities/Channel" },
+      "description": "Publicly readable live TV and OTT channel catalog; admin-only writes."
+    },
+    "/banners/{bannerId}": {
+      "schema": { "$ref": "#/entities/BannerNotice" },
+      "description": "Publicly readable promo & notice banners uploaded by admin; admin-only writes."
+    },
+    "/live_events/{eventId}": {
+      "schema": { "$ref": "#/entities/LiveEvent" },
+      "description": "Publicly readable live event streams synced across all devices; admin-only writes."
+    },
+    "/updates_inbox/{updateId}": {
+      "schema": { "$ref": "#/entities/UpdateNotice" },
+      "description": "Publicly readable real-time broadcast announcements; admin-only writes."
+    },
+    "/broken_reports/{reportId}": {
+      "schema": { "$ref": "#/entities/BrokenReport" },
+      "description": "Viewer-submitted broken-link reports for channels or live events; validated create for viewers, admin-only read/delete."
+    },
+    "/app_metrics/{metricId}": {
+      "schema": { "$ref": "#/entities/AppAnalytics" },
+      "description": "Real-time aggregate app analytics; incrementable by viewers, readable only by admins."
+    },
+    "/admins/{adminUid}": {
+      "schema": { "$ref": "#/entities/AdminMember" },
+      "description": "Read-own-doc admin registry; managed via Firebase Console."
+    }
+  }
+}

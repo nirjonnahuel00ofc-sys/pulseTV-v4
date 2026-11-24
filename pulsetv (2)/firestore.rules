@@ -1,0 +1,209 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    // Global safety net: deny all unmatched paths by default
+    match /{document=**} {
+      allow read, write: if false;
+    }
+
+    function isValidId(id) {
+      return id is string && id.size() >= 1 && id.size() <= 128 && id.matches('^[a-zA-Z0-9_\\-]+$');
+    }
+
+    function incoming() {
+      return request.resource.data;
+    }
+
+    function existing() {
+      return resource.data;
+    }
+
+    function isSignedIn() {
+      return request.auth != null;
+    }
+
+    // Admin check: replace or add your verified Google email below, or add your UID
+    // as a document in /admins/{uid} in the Firebase Console.
+    function isAdmin() {
+      return isSignedIn() && (
+        (request.auth.token.email_verified == true &&
+         request.auth.token.email == 'nirjonnahuel00ofc@gmail.com') ||
+        exists(/databases/$(database)/documents/admins/$(request.auth.uid))
+      );
+    }
+
+    function isValidChannel(data) {
+      return data.name is string && data.name.size() >= 1 && data.name.size() <= 80 &&
+             data.category is string && data.category.size() >= 1 && data.category.size() <= 40 &&
+             data.language is string && data.language.size() >= 1 && data.language.size() <= 40 &&
+             (!('country' in data) || (data.country is string && data.country.size() >= 1 && data.country.size() <= 50)) &&
+             (!('logo' in data) || (data.logo is string && data.logo.size() <= 500)) &&
+             data.primary_url is string && data.primary_url.size() >= 8 && data.primary_url.size() <= 1000 &&
+             data.primary_url.matches('^https?://.*') &&
+             (!('backup_url' in data) || (data.backup_url is string && data.backup_url.size() <= 1000 && (data.backup_url.size() == 0 || data.backup_url.matches('^https?://.*')))) &&
+             data.is_active is bool &&
+             data.created_at is timestamp && data.created_at <= request.time &&
+             data.updated_at is timestamp && data.updated_at <= request.time;
+    }
+
+    function isValidUpdateNotice(data) {
+      return data.title is string && data.title.size() >= 1 && data.title.size() <= 120 &&
+             data.message is string && data.message.size() >= 1 && data.message.size() <= 1000 &&
+             (!('category' in data) || (data.category is string && data.category.size() >= 1 && data.category.size() <= 40)) &&
+             data.timestamp is timestamp && data.timestamp <= request.time;
+    }
+
+    function isValidLiveEvent(data) {
+      return data.title is string && data.title.size() >= 1 && data.title.size() <= 100 &&
+             data.sport is string && data.sport.size() >= 1 && data.sport.size() <= 40 &&
+             (!('teams' in data) || (data.teams is string && data.teams.size() <= 100)) &&
+             data.status is string && data.status in ['LIVE', 'UPCOMING', 'ENDED'] &&
+             (!('thumbnail' in data) || (data.thumbnail is string && data.thumbnail.size() <= 500 && (data.thumbnail.size() == 0 || data.thumbnail.matches('^https?://.*')))) &&
+             data.stream_url is string && data.stream_url.size() >= 8 && data.stream_url.size() <= 1000 &&
+             data.stream_url.matches('^https?://.*') &&
+             (!('backup_url' in data) || (data.backup_url is string && data.backup_url.size() <= 1000 && (data.backup_url.size() == 0 || data.backup_url.matches('^https?://.*')))) &&
+             data.is_active is bool &&
+             data.created_at is timestamp && data.created_at <= request.time &&
+             data.updated_at is timestamp && data.updated_at <= request.time;
+    }
+
+    function isValidBrokenReport(data) {
+      return data.channel_id is string && data.channel_id.size() >= 1 && data.channel_id.size() <= 128 &&
+             data.channel_id.matches('^[a-zA-Z0-9_\\-]+$') &&
+             data.channel_name is string && data.channel_name.size() >= 1 && data.channel_name.size() <= 100 &&
+             data.reason is string && data.reason.size() >= 1 && data.reason.size() <= 500 &&
+             data.timestamp is timestamp && data.timestamp <= request.time;
+    }
+
+    function isValidBanner(data) {
+      return data.title is string && data.title.size() >= 1 && data.title.size() <= 100 &&
+             (!('message' in data) || (data.message is string && data.message.size() <= 400)) &&
+             data.image_data is string && data.image_data.size() >= 10 && data.image_data.size() <= 450000 &&
+             (data.image_data.matches('^https?://.*') || data.image_data.matches('^data:image/(jpeg|jpg|png|webp);base64,[A-Za-z0-9+/=\\n\\r]+$')) &&
+             (!('action_url' in data) || (data.action_url is string && data.action_url.size() <= 1000 && (data.action_url.size() == 0 || data.action_url.matches('^https?://.*')))) &&
+             data.is_active is bool &&
+             data.created_at is timestamp && data.created_at <= request.time &&
+             data.updated_at is timestamp && data.updated_at <= request.time;
+    }
+
+    // Public read for Guest Mode live channel sync; admin-only create/update/delete
+    match /channels/{channelId} {
+      allow get: if isValidId(channelId);
+      allow list: if true;
+
+      allow create: if isAdmin() &&
+                       isValidId(channelId) &&
+                       incoming().keys().hasAll(['name', 'category', 'language', 'primary_url', 'is_active', 'created_at', 'updated_at']) &&
+                       incoming().keys().hasOnly(['name', 'category', 'language', 'country', 'logo', 'primary_url', 'backup_url', 'is_active', 'created_at', 'updated_at']) &&
+                       isValidChannel(incoming());
+
+      allow update: if isAdmin() &&
+                       isValidId(channelId) &&
+                       isValidChannel(incoming()) &&
+                       incoming().created_at == existing().created_at &&
+                       incoming().diff(existing()).affectedKeys().hasOnly(['name', 'category', 'language', 'country', 'logo', 'primary_url', 'backup_url', 'is_active', 'updated_at']);
+
+      allow delete: if isAdmin() && isValidId(channelId);
+    }
+
+    // Public read for Notice Banners uploaded from Admin; admin-only CRUD
+    match /banners/{bannerId} {
+      allow get: if isValidId(bannerId);
+      allow list: if true;
+
+      allow create: if isAdmin() &&
+                       isValidId(bannerId) &&
+                       incoming().keys().hasAll(['title', 'image_data', 'is_active', 'created_at', 'updated_at']) &&
+                       incoming().keys().hasOnly(['title', 'message', 'image_data', 'action_url', 'is_active', 'created_at', 'updated_at']) &&
+                       isValidBanner(incoming());
+
+      allow update: if isAdmin() &&
+                       isValidId(bannerId) &&
+                       isValidBanner(incoming()) &&
+                       incoming().created_at == existing().created_at &&
+                       incoming().diff(existing()).affectedKeys().hasOnly(['title', 'message', 'image_data', 'action_url', 'is_active', 'updated_at']);
+
+      allow delete: if isAdmin() && isValidId(bannerId);
+    }
+
+    // Public read for Guest Mode Live Events (synced across all phones); admin-only create/update/delete
+    match /live_events/{eventId} {
+      allow get: if isValidId(eventId);
+      allow list: if true;
+
+      allow create: if isAdmin() &&
+                       isValidId(eventId) &&
+                       incoming().keys().hasAll(['title', 'sport', 'status', 'stream_url', 'is_active', 'created_at', 'updated_at']) &&
+                       incoming().keys().hasOnly(['title', 'sport', 'teams', 'status', 'thumbnail', 'stream_url', 'backup_url', 'is_active', 'created_at', 'updated_at']) &&
+                       isValidLiveEvent(incoming());
+
+      allow update: if isAdmin() &&
+                       isValidId(eventId) &&
+                       isValidLiveEvent(incoming()) &&
+                       incoming().created_at == existing().created_at &&
+                       incoming().diff(existing()).affectedKeys().hasOnly(['title', 'sport', 'teams', 'status', 'thumbnail', 'stream_url', 'backup_url', 'is_active', 'updated_at']);
+
+      allow delete: if isAdmin() && isValidId(eventId);
+    }
+
+    // Public read for Guest Mode Update Inbox; admin-only broadcast creation/deletion
+    match /updates_inbox/{updateId} {
+      allow get: if isValidId(updateId);
+      allow list: if true;
+
+      allow create: if isAdmin() &&
+                       isValidId(updateId) &&
+                       incoming().keys().hasAll(['title', 'message', 'timestamp']) &&
+                       incoming().keys().hasOnly(['title', 'message', 'category', 'timestamp']) &&
+                       isValidUpdateNotice(incoming());
+
+      allow update: if false;
+      allow delete: if isAdmin() && isValidId(updateId);
+    }
+
+    // Viewers (including guests) can log validated broken-link reports for existing channels or live events;
+    // only admins can inspect or clear submitted reports.
+    match /broken_reports/{reportId} {
+      allow get: if isAdmin() && isValidId(reportId);
+      allow list: if isAdmin();
+
+      allow create: if isValidId(reportId) &&
+                       incoming().keys().hasAll(['channel_id', 'channel_name', 'reason', 'timestamp']) &&
+                       incoming().keys().hasOnly(['channel_id', 'channel_name', 'reason', 'timestamp']) &&
+                       isValidBrokenReport(incoming()) &&
+                       (exists(/databases/$(database)/documents/channels/$(incoming().channel_id)) ||
+                        exists(/databases/$(database)/documents/live_events/$(incoming().channel_id)));
+
+      allow update: if false;
+      allow delete: if isAdmin() && isValidId(reportId);
+    }
+
+    // Real-time aggregate analytics for Admin Dashboard: viewers increment +1 per session/play; admins read
+    match /app_metrics/{metricId} {
+      allow get, list: if isAdmin();
+
+      allow create: if metricId == 'summary' &&
+                       incoming().keys().hasAll(['app_opens', 'channel_plays', 'event_plays', 'updated_at']) &&
+                       incoming().keys().hasOnly(['app_opens', 'channel_plays', 'event_plays', 'updated_at']) &&
+                       incoming().app_opens is int && incoming().app_opens >= 0 && incoming().app_opens <= 1 &&
+                       incoming().channel_plays is int && incoming().channel_plays >= 0 && incoming().channel_plays <= 1 &&
+                       incoming().event_plays is int && incoming().event_plays >= 0 && incoming().event_plays <= 1 &&
+                       incoming().updated_at is timestamp && incoming().updated_at <= request.time;
+
+      allow update: if metricId == 'summary' &&
+                       incoming().diff(existing()).affectedKeys().hasOnly(['app_opens', 'channel_plays', 'event_plays', 'updated_at']) &&
+                       incoming().app_opens is int && incoming().app_opens >= existing().app_opens && incoming().app_opens <= existing().app_opens + 1 &&
+                       incoming().channel_plays is int && incoming().channel_plays >= existing().channel_plays && incoming().channel_plays <= existing().channel_plays + 1 &&
+                       incoming().event_plays is int && incoming().event_plays >= existing().event_plays && incoming().event_plays <= existing().event_plays + 1 &&
+                       incoming().updated_at is timestamp && incoming().updated_at <= request.time;
+
+      allow delete: if false;
+    }
+
+    // Admin registry: read-own-uid only, managed via Firebase Console
+    match /admins/{adminUid} {
+      allow get: if isSignedIn() && request.auth.uid == adminUid;
+      allow list, write: if false;
+    }
+  }
+}

@@ -1,0 +1,6 @@
+{
+  "name": "PulseTV",
+  "description": "Fast, lightweight Live TV and OTT streaming app with dark cinematic UI, Media3 HLS/MPEG-TS player, guest browsing, real-time Cloud Firestore sync, broken-link reporting, and PIN-protected Admin Panel.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
